@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import {
   ArrowRight, ArrowUpRight, Mail, Phone, Linkedin, Send, ExternalLink,
@@ -13,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { submitContact } from "@/lib/submit-contact";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -124,7 +126,7 @@ function HeroBento() {
         </div>
 
         <div className="col-span-12 lg:col-span-4 tile p-0 min-h-[460px] relative overflow-hidden group animate-fade-up" style={{ animationDelay: "0.1s" }}>
-          <img src={heroPortrait} alt="Hanisha Sarai" className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 scale-105 group-hover:scale-100 transition-all duration-700" />
+          <img src={heroPortrait} alt="Hanisha Sarai" className="absolute inset-0 w-full h-full object-cover object-[center_18%] grayscale group-hover:grayscale-0 scale-100 group-hover:scale-100 transition-all duration-700" />
           <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.16_0.02_250/0.95)] via-transparent to-transparent" />
           <div className="absolute top-5 left-5 right-5 flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase tracking-widest text-white/70 bg-black/30 backdrop-blur px-2 py-1 rounded">Portrait</span>
@@ -381,13 +383,21 @@ function Experience() {
 
 const PROJECTS = [
   {
+    title: "Rishika Enterprise",
+    tag: "Freelance · Full Stack",
+    stack: ["React.js", "Node.js", "MongoDB", "AI Chatbot"],
+    desc: "Full-stack industrial website with live metal price management through a secure admin portal, AI-powered chatbot, inquiry handling, and MongoDB-backed dynamic content.",
+    live: "https://rewebsite.onrender.com/",
+    gradient: "linear-gradient(135deg, oklch(0.48 0.14 45), oklch(0.35 0.12 30))",
+    big: true,
+  },
+  {
     title: "Vibgyor Events & Concepts",
     tag: "Full Stack",
     stack: ["React.js","Tailwind","Node.js","MongoDB"],
     desc: "Comprehensive event management platform with photo & video galleries, consultation bookings, event registrations and a secure admin panel for managing all submissions.",
     live: "https://vibgorrwebsite-lc8i-git-main-hanisha-sarais-projects.vercel.app/",
     gradient: "linear-gradient(135deg, oklch(0.5 0.18 230), oklch(0.4 0.15 270))",
-    big: true,
   },
   {
     title: "AI Personality Chatbot",
@@ -483,10 +493,29 @@ function Work() {
 
 function Contact() {
   const [sending, setSending] = useState(false);
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const submitContactFn = useServerFn(submitContact);
+
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSending(true);
-    setTimeout(() => { setSending(false); toast.success("Message sent! I'll get back to you soon."); (e.target as HTMLFormElement).reset(); }, 900);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      await submitContactFn({
+        data: {
+          name: String(formData.get("name") ?? ""),
+          email: String(formData.get("email") ?? ""),
+          message: String(formData.get("message") ?? ""),
+        },
+      });
+      toast.success("Message sent! I'll get back to you soon.");
+      form.reset();
+    } catch {
+      toast.error("Could not send your message. Please try again or email me directly.");
+    } finally {
+      setSending(false);
+    }
   };
   return (
     <section id="contact" className="px-4 lg:px-8 py-20">
